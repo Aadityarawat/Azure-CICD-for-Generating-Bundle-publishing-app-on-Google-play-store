@@ -1,7 +1,7 @@
 # Azure-CICD-for-Generating-Bundle-publishing-app-on-Google-play-store
 By reading this repo, you will understand how to create a CI/CD pipeline for generating bundles and a release pipeline to publish your app on the Google Play Store.
 
-
+// Line 32 to 124 is the script for pipeline and if you are copy pasting make sure replace bullets to "-" (hyphen).
 CI/CD using Azure DevOps 
 
 What is CI/CD? 
@@ -29,57 +29,106 @@ Now in review you need to write some script in it.
 
 PART 1 (Generate Signed Bundle) 
 
-
-
 trigger: 
-- master
-  
+
+- master 
+
+ 
+
 pool: 
+
 vmImage: ubuntu-latest 
 
+ 
+
 steps: 
+
 - task: DownloadSecureFile@1 
+
 inputs: 
+
 secureFile: 'keystore1' 
+
+ 
+
 (keystore1 is jsk file I have stored in the pipeline -> lib -> secure file) 
 
+ 
+
 - task: Gradle@2 
+
 inputs: 
+
 workingDirectory: '$(Build.Repository.LocalPath)' 
+
 gradleWrapperFile: '$(Build.Repository.LocalPath)/gradlew' 
+
 gradleOptions: '-Xmx3072m' 
+
 javaHomeOption: 'JDKVersion' 
+
 jdkVersionOption: '17'   (as I have set java version in gradle 17)   
+
 publishJUnitResults: false 
+
 testResultsFiles: '**/TEST-*.xml' 
+
 tasks: 'clean build test assembleRelease assembleDebug assembleAndroidTest bundleRelease' 
-sonarQubeRunAnalysis: false
+
+sonarQubeRunAnalysis: false 
+
+ 
 
 - task: CmdLine@2 
+
 displayName: 'Signing and aligning AAB file(s) app/build/outputs/bundle/release/app-release.aab' 
+
 inputs: 
+
 script: | 
+
 jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \ 
+
 -keystore $(Agent.TempDirectory)/keystore1 \  
+
 -storepass '12345678' \ 
+
 -keypass '12345678' \ 
+
 $(system.defaultworkingdirectory)/app/build/outputs/bundle/release/app-release.aab \ 
+
 'key0' 
 
+ 
+
 - task: CopyFiles@2 
+
 inputs: 
+
 SourceFolder: '$(system.defaultworkingdirectory)/app/build/outputs/bundle/release/' 
+
 Contents: '**' 
+
 TargetFolder: '$(build.artifactstagingdirectory)' 
 
-- task: PublishBuildArtifacts@1 
-inputs: 
-PathtoPublish: '$(Build.ArtifactStagingDirectory)' 
-ArtifactName: 'drop' 
-publishLocation: 'Container'
+ 
 
+- task: PublishBuildArtifacts@1 
+
+inputs: 
+
+PathtoPublish: '$(Build.ArtifactStagingDirectory)' 
+
+ArtifactName: 'drop' 
+
+publishLocation: 'Container' 
+
+ 
+
+ 
 
 So, we successfully completed the first half. Run the pipeline and you can see the result inside the publish option that we have successfully generated the signed release bundle. 
+ 
 
 PART 2 (Release pipeline for google play store) 
 
@@ -135,4 +184,5 @@ NOTE: We need to publish our app in internal testing or production at least once
 
  
 
+ 
  
